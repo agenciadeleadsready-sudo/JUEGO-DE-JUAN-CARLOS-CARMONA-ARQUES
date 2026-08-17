@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>B.TOUS · Peluquería</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f0ea;color:#181716}.app{max-width:520px;margin:auto;padding:20px 18px 100px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{font-size:30px;font-weight:900;letter-spacing:.15em}.sub{font-size:11px;letter-spacing:.3em;color:#777}.btn{border:0;border-radius:13px;padding:13px 15px;font-weight:800;cursor:pointer}.dark{background:#191817;color:#fff}.gold{background:#c49a61}.soft{background:#eee7df}.light{background:#fff}.full{width:100%}.hero{background:#191817;color:#fff;border-radius:24px;padding:26px;margin:20px 0}.hero h1{font-size:34px;line-height:1.05;margin:8px 0}.hero p{color:#ddd3ca}.actions{display:flex;gap:10px;flex-wrap:wrap}.download{background:#fff;border:1px solid #e3dbd2;border-radius:16px;padding:13px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:#fff;border:1px solid #e3dbd2;border-radius:20px;padding:15px;min-height:110px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}.card.sel{outline:2px solid #191817}.price{font-weight:900}.panel,.appt{background:#fff;border:1px solid #e3dbd2;border-radius:20px;padding:18px}.field{margin:12px 0}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;padding:13px;border:1px solid #d9cec3;border-radius:11px;font-size:16px;background:#fff}.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.slot{padding:10px 3px;border:1px solid #d9cec3;border-radius:10px;background:#fff;font-weight:800}.slot.sel{background:#191817;color:#fff}.slot.busy{opacity:.35;text-decoration:line-through}.status{min-height:22px;margin-top:10px;font-weight:800}.ok{color:#15723d}.err{color:#9b2626}.hidden{display:none!important}.nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);width:min(488px,calc(100% - 28px));display:grid;grid-template-columns:repeat(3,1fr);background:#191817ed;padding:8px;border-radius:18px}.nav button{border:0;background:transparent;color:#aaa;padding:11px}.nav button.on{background:#fff;color:#222;border-radius:11px;font-weight:800}.modal{display:none;position:fixed;inset:0;background:#0009;align-items:end;justify-content:center;padding:14px;z-index:9}.modal.show{display:flex}.sheet{width:min(520px,100%);background:#fff;border-radius:25px;padding:20px}.tabs{display:grid;grid-template-columns:1fr 1fr;background:#eee7df;border-radius:12px;padding:4px}.tab{border:0;background:transparent;padding:10px;font-weight:800;border-radius:9px}.tab.on{background:#fff}.appt{margin:10px 0}.notice{background:#fff7e9;border:1px solid #ead4a8;border-radius:14px;padding:10px 12px;margin:10px 0;font-size:13px}.account-actions{display:grid;gap:8px;margin-top:12px}@media(max-width:390px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><div class="brand">B.TOUS</div><div class="sub">PELUQUERÍA</div></div>
+    <button id="topAccount" class="btn soft" type="button">Mi cuenta</button>
+  </div>
+  <main id="home">
+    <section class="hero">
+      <small>TU MOMENTO · TU ESTILO</small><h1>Reserva tu cita.</h1>
+      <p>Elige servicio, día y hora y confirma tu cita.</p>
+      <div class="actions"><button class="btn gold" id="signupTop" type="button">Darse de alta</button><button class="btn light" id="loginTop" type="button">Entrar</button><button class="btn soft" id="toBook" type="button">Pedir cita</button></div>
+    </section>
+    <div class="download"><div><strong>Descarga B.TOUS</strong><br><small>Añádela a tu móvil</small></div><button class="btn dark" id="install" type="button">Descargar APP</button></div>
+    <h2>Servicios</h2><div class="grid" id="cards"></div>
+    <h2 id="book">Pedir cita</h2>
+    <div class="panel">
+      <div id="who" class="notice">No has iniciado sesión.</div>
+      <div class="field"><label>Servicio</label><select id="service"></select></div>
+      <div class="field"><label>Día</label><input id="date" type="date"></div>
+      <div class="field"><label>Hora disponible</label><div class="slots" id="slots"></div></div>
+      <button class="btn dark full" type="button" id="bookBtn">Confirmar cita</button>
+      <div id="status" class="status"></div>
+    </div>
+  </main>
+  <main id="appointments" class="hidden"><h2>Mis citas</h2><div id="apptList"></div></main>
+  <main id="account" class="hidden"><h2>Mi cuenta</h2><div id="accountBox"></div></main>
+</div>
+<nav class="nav"><button class="on" data-view="home">Inicio</button><button data-view="appointments">Mis citas</button><button data-view="account">Mi cuenta</button></nav>
+<div class="modal" id="auth"><div class="sheet">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h2>Cuenta B.TOUS</h2><button class="btn soft" id="close" type="button">✕</button></div>
+  <div class="tabs"><button class="tab on" data-form="signup" type="button">Darse de alta</button><button class="tab" data-form="login" type="button">Entrar</button></div>
+  <form id="signup"><div class="field"><label>Nombre</label><input id="rname" autocomplete="name" required></div><div class="field"><label>Teléfono</label><input id="rphone" inputmode="tel" autocomplete="tel" required></div><div class="field"><label>Contraseña</label><input id="rpass" type="password" minlength="4" autocomplete="new-password" required></div><button class="btn dark full">Crear cuenta</button><div id="signupStatus" class="status"></div></form>
+  <form id="login" class="hidden"><div class="field"><label>Teléfono</label><input id="lphone" inputmode="tel" autocomplete="tel" required></div><div class="field"><label>Contraseña</label><input id="lpass" type="password" autocomplete="current-password" required></div><button class="btn dark full">Entrar</button><div id="loginStatus" class="status"></div></form>
+</div></div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id), qa=s=>[...document.querySelectorAll(s)];
+const R=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch{return f}}, W=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const USERS='btous_users', APPTS='btous_appointments', SESSION='btous_session_v3', SERVICES='btous_services';
+const N=p=>String(p||'').replace(/\D/g,'').replace(/^34(?=\d{9}$)/,'');
+const DEF=[{id:'lavar',n:'Lavar',p:8,i:'🫧'},{id:'peinar',n:'Peinar',p:18,i:'💇‍♀️'},{id:'cortar',n:'Cortar',p:22,i:'✂️'},{id:'tenir',n:'Teñir',p:35,i:'🎨'},{id:'mechas',n:'Mechas',p:55,i:'✨'},{id:'tratamiento',n:'Tratamiento',p:25,i:'🧴'}];
+const TIMES=['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30'];
+const M=n=>Number(n||0).toLocaleString('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
+const services=()=>R(SERVICES,DEF).map((s,i)=>({...DEF.find(d=>d.id===s.id),...s,i:s.i||DEF[i]?.i||'✂️'}));
+const users=()=>R(USERS,[]), appts=()=>R(APPTS,[]), session=()=>R(SESSION,null);
+let sel='lavar', time='';
+function stat(t,ok=false){$('status').textContent=t;$('status').className='status '+(t?(ok?'ok':'err'):'')}
+function formStat(id,t,ok=false){$(id).textContent=t;$(id).className='status '+(t?(ok?'ok':'err'):'')}
+function renderWho(){const s=session();$('who').textContent=s?`Cita para: ${s.name} · ${s.phone}`:'No has iniciado sesión.'}
+function renderServices(){const a=services();if(!a.some(x=>x.id===sel))sel=a[0]?.id||'lavar';$('cards').innerHTML=a.map(x=>`<div class="card ${x.id===sel?'sel':''}" data-service="${x.id}"><div style="font-size:28px">${x.i}</div><strong>${x.n}</strong><div class="price">${M(x.p)}</div></div>`).join('');$('service').innerHTML=a.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${x.n} · ${M(x.p)}</option>`).join('');qa('[data-service]').forEach(c=>c.onclick=()=>{sel=c.dataset.service;time='';renderServices();renderSlots()})}
+function renderSlots(){const d=$('date').value,busy=new Set(appts().filter(a=>a.date===d&&a.status!=='cancelled').map(a=>a.time));$('slots').innerHTML=TIMES.map(t=>`<button type="button" class="slot ${busy.has(t)?'busy':''} ${time===t?'sel':''}" data-time="${t}" ${busy.has(t)?'disabled':''}>${t}</button>`).join('');qa('[data-time]:not(:disabled)').forEach(b=>b.onclick=()=>{time=b.dataset.time;stat('');renderSlots()})}
+function blankSignup(){$('rname').value='';$('rphone').value='';$('rpass').value='';formStat('signupStatus','')}
+function blankLogin(){$('lphone').value='';$('lpass').value='';formStat('loginStatus','')}
+function switchForm(id){$('signup').classList.toggle('hidden',id!=='signup');$('login').classList.toggle('hidden',id!=='login');qa('[data-form]').forEach(b=>b.classList.toggle('on',b.dataset.form===id));if(id==='signup')blankSignup();else blankLogin()}
+function openAuth(id='signup'){$('auth').classList.add('show');switchForm(id);setTimeout(()=>$(id==='signup'?'rname':'lphone').focus(),0)}
+function show(id){['home','appointments','account'].forEach(v=>$(v).classList.toggle('hidden',v!==id));qa('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.view===id));if(id==='appointments')renderAppts();if(id==='account')renderAccount();if(id==='home')renderWho()}
+function renderAppts(){const s=session();if(!s){$('apptList').innerHTML='<div class="panel">Date de alta o entra para ver tus citas.</div>';return}const a=appts().filter(x=>x.phone===s.phone).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));$('apptList').innerHTML=a.length?a.map(x=>{const sv=services().find(v=>v.id===x.service)||{n:x.service,i:'✂️'};return `<div class="appt"><strong>${sv.i} ${sv.n}</strong><div>${x.date} · ${x.time}</div><b>${x.status==='cancelled'?'CANCELADA':'CONFIRMADA'}</b>${x.status!=='cancelled'?`<br><button class="btn soft" data-cancel="${x.id}" type="button">Cancelar</button>`:''}</div>`}).join(''):'<div class="panel">No tienes citas.</div>';qa('[data-cancel]').forEach(b=>b.onclick=()=>{W(APPTS,appts().map(x=>x.id===b.dataset.cancel?{...x,status:'cancelled'}:x));renderAppts();renderSlots()})}
+function renderAccount(){const s=session();$('accountBox').innerHTML=s?`<div class="panel"><strong>${s.name}</strong><p>📞 ${s.phone}</p><div class="account-actions"><button class="btn gold full" id="newClient" type="button">Darse de alta otro cliente</button><button class="btn soft full" id="changeClient" type="button">Cambiar de cliente / Entrar</button><button class="btn dark full" id="logout" type="button">Cerrar sesión</button></div></div>`:`<div class="panel"><div class="account-actions"><button class="btn gold full" id="newClient" type="button">Darse de alta</button><button class="btn soft full" id="changeClient" type="button">Entrar</button></div></div>`;$('newClient').onclick=()=>openAuth('signup');$('changeClient').onclick=()=>openAuth('login');if(s)$('logout').onclick=()=>{localStorage.removeItem(SESSION);renderAccount();renderWho();renderAppts()}}
+$('bookBtn').onclick=()=>{const s=session();if(!s){stat('Primero date de alta o entra.');openAuth('signup');return}const d=$('date').value;if(!d){stat('Selecciona un día.');return}if(!time){stat('Selecciona una hora.');return}const a=appts();if(a.some(x=>x.date===d&&x.time===time&&x.status!=='cancelled')){time='';renderSlots();stat('Esa hora ya está ocupada.');return}a.push({id:'C'+Date.now()+Math.random().toString(36).slice(2,6),phone:s.phone,name:s.name,service:sel,date:d,time,status:'confirmed',created:new Date().toISOString()});W(APPTS,a);stat('✓ Cita confirmada correctamente',true);time='';renderSlots();renderAppts();setTimeout(()=>show('appointments'),250)};
+$('signup').onsubmit=e=>{e.preventDefault();const name=$('rname').value.trim(),phone=N($('rphone').value),pass=$('rpass').value;if(name.length<2){formStat('signupStatus','Escribe el nombre.');return}if(phone.length<9){formStat('signupStatus','Teléfono no válido.');return}if(pass.length<4){formStat('signupStatus','La contraseña debe tener al menos 4 caracteres.');return}const u=users();if(u.some(x=>x.phone===phone)){formStat('signupStatus','Ese teléfono ya está registrado. Pulsa Entrar.');return}u.push({name,phone,pass,created:new Date().toISOString()});W(USERS,u);W(SESSION,{name,phone});$('auth').classList.remove('show');renderWho();renderAccount();stat(`Cuenta creada para ${name}. Ya puedes confirmar la cita.`,true)};
+$('login').onsubmit=e=>{e.preventDefault();const phone=N($('lphone').value),pass=$('lpass').value,u=users().find(x=>x.phone===phone&&x.pass===pass);if(!u){formStat('loginStatus','Teléfono o contraseña incorrectos.');return}W(SESSION,{name:u.name,phone:u.phone});$('auth').classList.remove('show');renderWho();renderAccount();stat(`Sesión iniciada como ${u.name}.`,true)};
+$('service').onchange=e=>{sel=e.target.value;time='';renderServices();renderSlots()};$('date').onchange=()=>{time='';renderSlots()};
+$('signupTop').onclick=()=>openAuth('signup');$('loginTop').onclick=()=>openAuth('login');$('topAccount').onclick=()=>show('account');$('close').onclick=()=>$('auth').classList.remove('show');$('toBook').onclick=()=>$('book').scrollIntoView({behavior:'smooth'});$('install').onclick=()=>alert(/iphone|ipad|ipod/i.test(navigator.userAgent)?'En iPhone: Compartir → Añadir a pantalla de inicio.':'En Android: menú del navegador → Instalar aplicación.');
+qa('[data-form]').forEach(b=>b.onclick=()=>switchForm(b.dataset.form));qa('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.view));
+const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$('date').min=d.toISOString().slice(0,10);$('date').value=$('date').min;renderServices();renderSlots();renderWho();
+})();
+</script>
+</body></html>
