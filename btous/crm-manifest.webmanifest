@@ -1,0 +1,19 @@
+{
+  "name": "B.TOUS CRM",
+  "short_name": "B.TOUS CRM",
+  "description": "CRM de B.TOUS Peluquería",
+  "start_url": "./crm-instalable.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f2ee",
+  "theme_color": "#181716",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./btous-crm-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
