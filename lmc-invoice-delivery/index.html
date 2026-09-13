@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LMC Invoice Delivery v1</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f5f7fb;color:#101828;margin:0}.wrap{max-width:1100px;margin:auto;padding:28px}.card{background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 8px 24px #0000000b}h1{margin:0 0 8px}.muted{color:#667085}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input,button{font:inherit;padding:11px 13px;border-radius:10px;border:1px solid #d0d5dd}button{cursor:pointer;font-weight:700}.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}.green{background:#ecfdf3;color:#027a48;border-color:#abefc6}.wa{background:#25d366;color:#fff;border-color:#25d366}.mail{background:#eef4ff;color:#3538cd;border-color:#c7d7fe}.invoice{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 0;border-top:1px solid #eaecf0}.invoice:first-child{border-top:0}.status{font-size:12px;padding:5px 8px;border-radius:999px;background:#ecfdf3;color:#027a48}.hidden{display:none}.log{font-size:13px;white-space:pre-wrap;background:#101828;color:#d0d5dd;padding:12px;border-radius:10px;max-height:220px;overflow:auto}@media(max-width:700px){.invoice{grid-template-columns:1fr}.wrap{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>LMC Invoice Delivery v1</h1>
+<div class="muted">PDF + Email + WhatsApp + trazabilidad</div>
+<div id="auth" class="card">
+<h3>Acceso</h3>
+<div class="row"><input id="email" type="email" placeholder="Email"><input id="pass" type="password" placeholder="Contraseña"><button class="primary" id="login">Entrar</button></div>
+<div id="authmsg" class="muted"></div>
+</div>
+<div id="app" class="hidden">
+<div class="card"><div class="row" style="justify-content:space-between"><div><b id="orgname">Organización</b><div class="muted" id="who"></div></div><button id="logout">Salir</button></div></div>
+<div class="card"><h3>Facturas</h3><div class="muted">Descarga el PDF, compártelo o prepara Email/WhatsApp con enlace seguro.</div><div id="invoices"></div></div>
+<div class="card"><h3>Historial de envíos</h3><div id="deliveries" class="muted">Sin registros</div></div>
+<div class="card"><h3>Diagnóstico</h3><div id="log" class="log">Listo.</div></div>
+</div>
+</div>
+<script>
+const URL='https://egbtqmotbaxeqejctplu.supabase.co';
+const KEY='sb_publishable_s4m6vroqLYqPJPpcmPDobg_NQAYG1BU';
+const {createClient}=supabase;const sb=createClient(URL,KEY);
+const SHARE_BASE=URL+'/functions/v1/invoice-share?token=';
+let org=null,invoiceCache={};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const log=x=>{$('log').textContent=new Date().toLocaleTimeString()+' '+x+'\n'+$('log').textContent};
+async function boot(){const {data:{session}}=await sb.auth.getSession();if(session)await loadApp(session)}
+$('login').onclick=async()=>{$('authmsg').textContent='Entrando...';const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('pass').value});if(error){$('authmsg').textContent=error.message;return}await loadApp(data.session)};
+$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
+async function loadApp(session){$('auth').classList.add('hidden');$('app').classList.remove('hidden');const uid=session.user.id;const {data:p}=await sb.from('profiles').select('*').eq('id',uid).single();const {data:m,error:me}=await sb.from('memberships').select('organization_id,role').eq('user_id',uid).eq('status','active').limit(1).single();if(me){log('Membership: '+me.message);return}const {data:o}=await sb.from('organizations').select('*').eq('id',m.organization_id).single();org=o;$('orgname').textContent=o.name;$('who').textContent=(p?.full_name||session.user.email)+' · '+m.role;await refresh()}
+async function refresh(){await loadInvoices();await loadDeliveries()}
+async function loadInvoices(){const {data,error}=await sb.from('invoices').select('*').eq('organization_id',org.id).order('issued_at',{ascending:false}).limit(30);if(error){log(error.message);return}invoiceCache={};(data||[]).forEach(x=>invoiceCache[x.id]=x);const ids=[...new Set((data||[]).map(x=>x.customer_id))];let customers={};if(ids.length){const {data:c}=await sb.from('customers').select('id,first_name,last_name,company_name,email,phone').in('id',ids);(c||[]).forEach(x=>customers[x.id]=x)}$('invoices').innerHTML=(data||[]).length?(data||[]).map(i=>{const c=customers[i.customer_id]||{};const name=c.company_name||[c.first_name,c.last_name].filter(Boolean).join(' ')||i.customer_name;return '<div class="invoice"><div><b>'+esc(i.full_number)+'</b> · '+esc(name)+'<div class="muted">'+esc(i.issue_date)+' · '+Number(i.total).toFixed(2)+' € · '+esc(c.email||'sin email')+' · '+esc(c.phone||'sin teléfono')+'</div></div><div class="row"><button onclick="downloadPDF(\''+i.id+'\')">PDF</button><button class="green" onclick="sharePDF(\''+i.id+'\')">Compartir PDF</button><button class="mail" onclick="sendEmail(\''+i.id+'\',\''+esc(c.email||'')+'\')">Email</button><button class="wa" onclick="sendWA(\''+i.id+'\',\''+esc(c.phone||'')+'\')">WhatsApp</button></div></div>'}).join(''):'<div class="muted">No hay facturas emitidas.</div>'}
+async function invoiceData(id){const inv=invoiceCache[id];const {data:lines,error}=await sb.from('invoice_lines').select('*').eq('invoice_id',id).order('created_at');if(error)throw error;return{inv,lines:lines||[]}}
+async function buildPDF(id){const {inv,lines}=await invoiceData(id);const {jsPDF}=window.jspdf;const d=new jsPDF();let y=18;d.setFontSize(18);d.text('FACTURA '+inv.full_number,14,y);y+=10;d.setFontSize(10);d.text('Fecha: '+inv.issue_date,14,y);y+=10;d.setFontSize(12);d.text('Emisor',14,y);y+=6;d.setFontSize(10);[inv.issuer_name,inv.issuer_tax_id,inv.issuer_address].filter(Boolean).forEach(t=>{d.text(String(t),14,y);y+=5});y+=4;d.setFontSize(12);d.text('Cliente',14,y);y+=6;d.setFontSize(10);[inv.customer_name,inv.customer_tax_id,inv.customer_email].filter(Boolean).forEach(t=>{d.text(String(t),14,y);y+=5});y+=8;d.setFontSize(11);d.text('Concepto',14,y);d.text('IVA',145,y);d.text('Total',170,y);y+=5;d.line(14,y,196,y);y+=6;d.setFontSize(10);for(const l of lines){d.text(String(l.description).slice(0,60),14,y);d.text(Number(l.tax_rate).toFixed(2)+'%',145,y);d.text(Number(l.gross_amount).toFixed(2)+' €',170,y);y+=7}y+=5;d.line(120,y,196,y);y+=7;d.text('Base: '+Number(inv.subtotal).toFixed(2)+' €',125,y);y+=6;d.text('IVA: '+Number(inv.tax_total).toFixed(2)+' €',125,y);y+=7;d.setFontSize(12);d.text('TOTAL: '+Number(inv.total).toFixed(2)+' €',125,y);return{doc:d,name:inv.full_number+'.pdf'}}
+window.downloadPDF=async id=>{try{const {doc,name}=await buildPDF(id);doc.save(name);log('PDF descargado '+name)}catch(e){log('PDF error '+e.message)}};
+async function prepare(id,channel,recipient){const {data,error}=await sb.rpc('prepare_invoice_delivery',{p_invoice_id:id,p_channel:channel,p_recipient:recipient||null,p_expires_hours:168});if(error)throw error;return data[0]}
+async function mark(id,status){const {error}=await sb.rpc('mark_invoice_delivery_event',{p_delivery_id:id,p_status:status,p_error_message:null});if(error)throw error}
+window.sharePDF=async id=>{try{const prep=await prepare(id,'system_share',null);const {doc,name}=await buildPDF(id);const blob=doc.output('blob');const file=new File([blob],name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:'Factura '+invoiceCache[id].full_number,text:'Adjunto factura en PDF',files:[file]});await mark(prep.delivery_id,'shared');log('PDF compartido')}else{doc.save(name);await mark(prep.delivery_id,'shared');alert('Tu navegador no permite compartir el archivo directamente. Se ha descargado el PDF para adjuntarlo manualmente.')}await loadDeliveries()}catch(e){if(e.name!=='AbortError')log('Compartir: '+e.message)}};
+window.sendEmail=async(id,email)=>{try{if(!email){email=prompt('Email del cliente:')||'';if(!email)return}const prep=await prepare(id,'email',email);const link=SHARE_BASE+encodeURIComponent(prep.token);const inv=invoiceCache[id];const subject=encodeURIComponent('Factura '+inv.full_number);const body=encodeURIComponent('Hola,\n\nLe enviamos su factura '+inv.full_number+'.\n\nPuede consultarla aquí durante 7 días:\n'+link+'\n\nGracias.');location.href='mailto:'+encodeURIComponent(email)+'?subject='+subject+'&body='+body;await mark(prep.delivery_id,'shared');await loadDeliveries()}catch(e){log('Email: '+e.message)}};
+window.sendWA=async(id,phone)=>{try{if(!phone){phone=prompt('Teléfono con prefijo país:')||'';if(!phone)return}phone=phone.replace(/\D/g,'');if(phone.length===9)phone='34'+phone;const prep=await prepare(id,'whatsapp',phone);const link=SHARE_BASE+encodeURIComponent(prep.token);const inv=invoiceCache[id];const msg=encodeURIComponent('Hola, te enviamos la factura '+inv.full_number+'. Puedes abrirla aquí durante 7 días: '+link);window.open('https://wa.me/'+phone+'?text='+msg,'_blank');await mark(prep.delivery_id,'shared');await loadDeliveries()}catch(e){log('WhatsApp: '+e.message)}};
+async function loadDeliveries(){if(!org)return;const {data,error}=await sb.from('invoice_deliveries').select('id,invoice_id,channel,recipient,status,prepared_at').eq('organization_id',org.id).order('created_at',{ascending:false}).limit(50);if(error){log(error.message);return}$('deliveries').innerHTML=(data||[]).length?(data||[]).map(d=>'<div style="padding:10px 0;border-top:1px solid #eaecf0"><b>'+esc(d.channel)+'</b> · '+esc(d.recipient||'sistema')+' · <span class="status">'+esc(d.status)+'</span><div class="muted">'+new Date(d.prepared_at).toLocaleString()+' · '+esc(invoiceCache[d.invoice_id]?.full_number||d.invoice_id)+'</div></div>').join(''):'Sin registros'}
+boot();
+</script>
+</body>
+</html>
