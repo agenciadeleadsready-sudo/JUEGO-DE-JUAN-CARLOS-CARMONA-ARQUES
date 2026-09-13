@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LMC Beauty v1</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;margin:0;background:#f7f7fb;color:#111827}
+.wrap{max-width:1180px;margin:auto;padding:24px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 8px 24px #0000000a}
+h1{margin:0 0 6px}.muted{color:#667085}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select,button{font:inherit;padding:10px 12px;border:1px solid #d0d5dd;border-radius:10px}button{font-weight:700;cursor:pointer}.primary{background:#4f46e5;color:#fff}.pink{background:#db2777;color:#fff}
+.item{padding:12px 0;border-top:1px solid #eee}.item:first-child{border-top:0}.pill{padding:4px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px}
+.hidden{display:none}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>LMC Beauty v1</h1><div class="muted">Servicios · Profesionales · Horarios · Pausas · Vacaciones · Festivos</div>
+<div id="loginCard" class="card">
+  <h3>Acceso</h3>
+  <div class="row"><input id="email" type="email" placeholder="Email"><input id="pass" type="password" placeholder="Contraseña"><button id="login" class="primary">Entrar</button></div>
+  <div id="msg" class="muted"></div>
+</div>
+<div id="app" class="hidden">
+  <div class="card"><div class="row" style="justify-content:space-between"><div><b id="orgName"></b><div class="muted" id="me"></div></div><button id="logout">Salir</button></div></div>
+  <div class="grid">
+    <div class="card"><h3>Categorías y servicios</h3>
+      <div class="row"><input id="catName" placeholder="Nueva categoría"><button id="addCat">Crear categoría</button></div>
+      <div id="cats"></div>
+      <hr>
+      <div class="row"><input id="serviceName" placeholder="Servicio"><select id="serviceCat"></select><input id="serviceDur" type="number" value="30" min="5"><input id="servicePrice" type="number" value="20" step="0.01"><button id="addService" class="pink">Crear servicio</button></div>
+      <div id="services"></div>
+    </div>
+    <div class="card"><h3>Profesionales</h3>
+      <div class="row"><input id="specName" placeholder="Especialidad"><button id="addSpec">Crear especialidad</button></div>
+      <div class="row"><input id="proName" placeholder="Nombre profesional"><select id="proSpec"></select><button id="addPro" class="pink">Crear profesional</button></div>
+      <div id="pros"></div>
+    </div>
+  </div>
+  <div class="card"><h3>Configuración rápida</h3>
+    <div class="row">
+      <select id="selPro"></select><select id="selService"></select>
+      <button id="assign">Asignar servicio</button>
+      <button id="weekday">Lun–Vie 09:00–18:00</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <input id="pauseDate" type="date"><input id="pauseStart" type="time" value="13:00"><input id="pauseEnd" type="time" value="14:00"><button id="pause">Añadir pausa</button>
+      <input id="vacDate" type="date"><button id="vac">Vacaciones día completo</button>
+      <input id="closeDate" type="date"><button id="close">Cerrar centro ese día</button>
+    </div>
+  </div>
+  <div class="card"><h3>Diagnóstico</h3><pre id="log" style="white-space:pre-wrap;background:#111827;color:#e5e7eb;padding:14px;border-radius:10px"></pre></div>
+</div></div>
+<script>
+const URL='https://egbtqmotbaxeqejctplu.supabase.co';
+const KEY='sb_publishable_s4m6vroqLYqPJPpcmPDobg_NQAYG1BU';
+let token='',user=null,org=null,loc=null,cats=[],services=[],specs=[],pros=[];
+const $=x=>document.getElementById(x);
+const log=x=>$('log').textContent=new Date().toLocaleTimeString()+' '+x+'\n'+$('log').textContent;
+async function api(path,opts={}){const h={'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})};const r=await fetch(URL+path,{...opts,headers:{...h,...(opts.headers||{})}});if(!r.ok)throw new Error(await r.text());const t=await r.text();return t?JSON.parse(t):null}
+$('login').onclick=async()=>{try{$('msg').textContent='Entrando...';const x=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:$('email').value.trim(),password:$('pass').value})});token=x.access_token;user=x.user;await boot();}catch(e){$('msg').textContent=e.message}}
+$('logout').onclick=()=>location.reload();
+async function boot(){const ms=await api('/rest/v1/memberships?select=organization_id,role&user_id=eq.'+user.id+'&status=eq.active&limit=1');if(!ms.length)throw new Error('Sin organización');org=ms[0];const os=await api('/rest/v1/organizations?select=id,name&id=eq.'+org.organization_id);const ls=await api('/rest/v1/locations?select=id,name&organization_id=eq.'+org.organization_id+'&is_active=eq.true&limit=1');loc=ls[0];$('orgName').textContent=os[0].name;$('me').textContent=user.email+' · '+org.role+' · '+(loc?.name||'sin centro');$('loginCard').classList.add('hidden');$('app').classList.remove('hidden');await refresh()}
+async function refresh(){cats=await api('/rest/v1/service_categories?select=*&organization_id=eq.'+org.organization_id+'&order=sort_order,name');services=await api('/rest/v1/services?select=*&organization_id=eq.'+org.organization_id+'&order=name');specs=await api('/rest/v1/specialties?select=*&organization_id=eq.'+org.organization_id+'&order=name');pros=await api('/rest/v1/professionals?select=*&organization_id=eq.'+org.organization_id+'&order=display_name');render()}
+function render(){ $('cats').innerHTML=cats.map(c=>'<div class=item><span class=pill>'+c.name+'</span></div>').join('')||'<div class=muted>Sin categorías</div>';
+$('services').innerHTML=services.map(s=>'<div class=item><b>'+s.name+'</b> · '+s.duration_minutes+' min · '+Number(s.price).toFixed(2)+' €</div>').join('')||'<div class=muted>Sin servicios</div>';
+$('pros').innerHTML=pros.map(p=>'<div class=item><b>'+p.display_name+'</b></div>').join('')||'<div class=muted>Sin profesionales</div>';
+$('serviceCat').innerHTML=cats.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('');
+$('proSpec').innerHTML='<option value="">Sin especialidad</option>'+specs.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
+$('selPro').innerHTML=pros.map(p=>'<option value="'+p.id+'">'+p.display_name+'</option>').join('');
+$('selService').innerHTML=services.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
+}
+async function post(table,obj){return api('/rest/v1/'+table,{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(obj)})}
+$('addCat').onclick=async()=>{try{await post('service_categories',{organization_id:org.organization_id,name:$('catName').value.trim()});$('catName').value='';await refresh();log('Categoría creada')}catch(e){log(e.message)}}
+$('addSpec').onclick=async()=>{try{await post('specialties',{organization_id:org.organization_id,name:$('specName').value.trim()});$('specName').value='';await refresh();log('Especialidad creada')}catch(e){log(e.message)}}
+$('addService').onclick=async()=>{try{const r=await post('services',{organization_id:org.organization_id,name:$('serviceName').value.trim(),category_id:$('serviceCat').value,duration_minutes:+$('serviceDur').value,price:+$('servicePrice').value,tax_rate:21});const sid=r[0].id;await post('service_locations',{organization_id:org.organization_id,service_id:sid,location_id:loc.id,is_active:true});$('serviceName').value='';await refresh();log('Servicio creado y activo en centro')}catch(e){log(e.message)}}
+$('addPro').onclick=async()=>{try{const r=await post('professionals',{organization_id:org.organization_id,display_name:$('proName').value.trim()});const pid=r[0].id;await post('professional_locations',{organization_id:org.organization_id,professional_id:pid,location_id:loc.id,is_active:true});if($('proSpec').value)await post('professional_specialties',{organization_id:org.organization_id,professional_id:pid,specialty_id:$('proSpec').value,is_active:true});$('proName').value='';await refresh();log('Profesional creado')}catch(e){log(e.message)}}
+$('assign').onclick=async()=>{try{await post('professional_services',{organization_id:org.organization_id,professional_id:$('selPro').value,service_id:$('selService').value,is_active:true});log('Servicio asignado al profesional')}catch(e){log(e.message)}}
+$('weekday').onclick=async()=>{try{for(let d=1;d<=5;d++)await post('availability_rules',{organization_id:org.organization_id,location_id:loc.id,professional_id:$('selPro').value,day_of_week:d,start_time:'09:00',end_time:'18:00',is_active:true});log('Horario Lun–Vie creado')}catch(e){log(e.message)}}
+$('pause').onclick=async()=>{try{const d=$('pauseDate').value;await post('time_blocks',{organization_id:org.organization_id,location_id:loc.id,professional_id:$('selPro').value,starts_at:d+'T'+$('pauseStart').value+':00+02:00',ends_at:d+'T'+$('pauseEnd').value+':00+02:00',reason:'Pausa'});log('Pausa creada')}catch(e){log(e.message)}}
+$('vac').onclick=async()=>{try{await post('availability_exceptions',{organization_id:org.organization_id,location_id:loc.id,professional_id:$('selPro').value,local_date:$('vacDate').value,is_available:false,label:'Vacaciones'});log('Vacaciones creadas')}catch(e){log(e.message)}}
+$('close').onclick=async()=>{try{const d=$('closeDate').value;const next=new Date(d+'T00:00:00');next.setDate(next.getDate()+1);const n=next.toISOString().slice(0,10);await post('location_closures',{organization_id:org.organization_id,location_id:loc.id,starts_at:d+'T00:00:00+02:00',ends_at:n+'T00:00:00+02:00',label:'Cierre centro'});log('Cierre de centro creado')}catch(e){log(e.message)}}
+</script></body></html>
