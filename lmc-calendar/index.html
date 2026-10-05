@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="description" content="LMC Calendar - calendario privado y sincronizado">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="stylesheet" href="/styles.css">
+<title>LMC Calendar</title>
+</head>
+<body>
+<div id="authbox" class="auth"><div class="login card stack">
+<div class="brand">LMC <b>CALENDAR</b></div><div class="muted">Calendario privado y sincronizado.</div>
+<input id="email" type="email" placeholder="Email" autocomplete="email">
+<input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password">
+<div class="row"><button id="login" class="primary grow">Entrar</button><button id="signup" class="pill grow">Crear cuenta</button></div>
+<button id="reset" class="pill">Recuperar contraseña</button><div id="msg" class="muted"></div>
+</div></div>
+
+<div id="app" class="app hidden">
+<aside class="side"><div class="brand">LMC <b>CALENDAR</b></div><div class="muted">Europe/Madrid · nube segura</div>
+<nav class="nav"><button data-view="calendar" class="active">Calendario</button><button data-view="agenda">Agenda</button><button data-view="tasks">Tareas</button><button data-view="settings">Ajustes</button></nav>
+<div class="side-bottom"><div id="user" class="muted"></div><button id="logout" class="pill">Cerrar sesión</button></div></aside>
+
+<main><div class="top"><div id="heading" class="title">Calendario</div><div class="grow"></div>
+<input id="search" class="pill" placeholder="Buscar…"><button id="today" class="pill">Hoy</button><button id="prev" class="pill">‹</button><button id="next" class="pill">›</button><button id="create" class="primary gold">+ Crear</button></div>
+<section id="calendar"><div class="cal card"><div class="week"><div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div></div><div id="grid" class="grid"></div></div></section>
+<section id="agenda" class="panel card hidden"><div id="agendaList" class="list"></div></section>
+<section id="tasks" class="panel card hidden"><div class="row task-create"><input id="taskTitle" class="pill grow" placeholder="Nueva tarea"><input id="taskDue" class="pill" type="datetime-local"><button id="addTask" class="primary">Añadir</button></div><div id="taskList" class="list task-list"></div></section>
+<section id="settings" class="panel card hidden stack"><h3>Ajustes</h3>
+<div class="row"><span class="grow">Notificaciones del navegador</span><button id="notify" class="pill">Activar</button></div>
+<div class="row"><span class="grow">Instalar LMC Calendar</span><button id="install" class="primary">Instalar</button></div>
+<div class="row"><span class="grow">Modo oscuro</span><button id="dark" class="pill">Cambiar</button></div>
+<div class="muted">En iPhone/iPad: Safari → Compartir → Añadir a pantalla de inicio. Las alarmas web pueden quedar limitadas por iOS si la app está completamente cerrada.</div>
+</section></main>
+<div class="mobile"><button data-view="calendar">Calendario</button><button data-view="agenda">Agenda</button><button data-view="tasks">Tareas</button><button data-view="settings">Ajustes</button></div>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modalbox card stack">
+<div class="row"><h3 class="grow">Evento</h3><button id="close" class="pill">✕</button></div><input id="eid" type="hidden">
+<div class="field"><label>Título</label><input id="etitle"></div><div class="field"><label>Descripción</label><textarea id="edesc"></textarea></div><div class="field"><label>Ubicación</label><input id="eloc"></div>
+<div class="cols"><div class="field"><label>Inicio</label><input id="estart" type="datetime-local"></div><div class="field"><label>Fin</label><input id="eend" type="datetime-local"></div></div>
+<div class="cols"><div class="field"><label>Recordatorio</label><select id="erem"><option value="0">A la hora</option><option value="5">5 min antes</option><option value="10" selected>10 min antes</option><option value="15">15 min antes</option><option value="30">30 min antes</option><option value="60">1 h antes</option><option value="120">2 h antes</option><option value="1440">1 día antes</option></select></div>
+<div class="field"><label>Repetición</label><select id="erep"><option value="">No repetir</option><option value="daily">Diario</option><option value="weekly">Semanal</option><option value="monthly">Mensual</option><option value="yearly">Anual</option></select></div></div>
+<div class="row"><button id="delete" class="pill">Eliminar</button><div class="grow"></div><button id="save" class="primary gold">Guardar</button></div>
+</div></div>
+
+<div id="alarm" class="modal hidden"><div class="modalbox card stack"><div class="muted">RECORDATORIO LMC</div><h2 id="alarmTitle"></h2>
+<div class="row"><button class="pill snooze" data-m="5">+5 min</button><button class="pill snooze" data-m="10">+10 min</button><button class="pill snooze" data-m="15">+15 min</button><button class="pill snooze" data-m="30">+30 min</button><button id="dismiss" class="primary grow">Descartar</button></div>
+</div></div>
+<script type="module" src="/app.js"></script>
+</body></html>
